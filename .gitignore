@@ -1,0 +1,15 @@
+/vendor/
+/node_modules/
+/.env
+/.env.backup
+/.env.production
+/.phpunit.result.cache
+/storage/*.key
+/storage/framework/cache/*
+/storage/framework/sessions/*
+/storage/framework/views/*
+/storage/logs/*
+/node_modules/
+/.phpunit.result.cache
+/.DS_Store
+Thumbs.db

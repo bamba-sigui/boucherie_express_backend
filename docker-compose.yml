@@ -1,0 +1,46 @@
+services:
+    laravel.app:
+        build:
+            context: .
+            dockerfile: Dockerfile
+        image: 'boucherie-express/app'
+        ports:
+            - '8000:80'
+        environment:
+            DB_HOST: mysql
+            DB_DATABASE: boucherie_express
+            DB_USERNAME: sail
+            DB_PASSWORD: password
+        volumes:
+            - .:/var/www/html
+        networks:
+            - sail
+        depends_on:
+            mysql:
+                condition: service_healthy
+
+    mysql:
+        image: 'mysql:8.0'
+        ports:
+            - '3306:3306'
+        environment:
+            MYSQL_ROOT_PASSWORD: rootpassword
+            MYSQL_DATABASE: boucherie_express
+            MYSQL_USER: sail
+            MYSQL_PASSWORD: password
+        volumes:
+            - sail-mysql:/var/lib/mysql
+        networks:
+            - sail
+        healthcheck:
+            test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+            retries: 5
+            timeout: 5s
+
+networks:
+    sail:
+        driver: bridge
+
+volumes:
+    sail-mysql:
+        driver: local

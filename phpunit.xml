@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <application>
+        <component name="Phalcon">
+            <paths>
+                <directory>app</directory>
+            </paths>
+        </component>
+    </application>
+</configuration>

@@ -16,7 +16,10 @@ return [
         ],
     ],
     'providers' => [
-        'users' => App\Models\User::class,
+        'users' => [
+            'driver' => 'eloquent',
+            'model'  => App\Models\User::class,
+        ],
     ],
     'passwords' => [
         'users' => [

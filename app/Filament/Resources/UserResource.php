@@ -18,6 +18,26 @@ class UserResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-users';
 
+    public static function canViewAny(): bool
+    {
+        return auth()->user()?->hasRole('admin') ?? false;
+    }
+
+    public static function canCreate(): bool
+    {
+        return auth()->user()?->hasRole('admin') ?? false;
+    }
+
+    public static function canEdit($record): bool
+    {
+        return auth()->user()?->hasRole('admin') ?? false;
+    }
+
+    public static function canDelete($record): bool
+    {
+        return auth()->user()?->hasRole('admin') ?? false;
+    }
+
     public static function form(Form $form): Form
     {
         return $form
@@ -35,6 +55,18 @@ class UserResource extends Resource
                     ->minLength(8),
                 Forms\Components\TextInput::make('phone')
                     ->tel(),
+                Forms\Components\Select::make('role')
+                    ->label('Rôle')
+                    ->options(['admin' => 'Administrateur', 'partenaire' => 'Partenaire'])
+                    ->required()
+                    ->afterStateHydrated(function ($component, $record) {
+                        $component->state($record?->getRoleNames()->first());
+                    })
+                    ->saveRelationshipsUsing(function ($record, $state) {
+                        if ($state) {
+                            $record->syncRoles([$state]);
+                        }
+                    }),
             ]);
     }
 
@@ -47,9 +79,7 @@ class UserResource extends Resource
                 Tables\Columns\TextColumn::make('phone'),
                 Tables\Columns\TextColumn::make('created_at')->dateTime(),
             ])
-            ->filters([
-                Tables\Filters\SearchFilter::make('email'),
-            ])
+            ->filters([])
             ->actions([
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make(),

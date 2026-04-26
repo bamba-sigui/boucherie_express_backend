@@ -18,7 +18,6 @@ RUN apt-get update && apt-get install -y \
     libonig-dev \
     supervisor \
     && docker-php-ext-install -j$(nproc) pdo_mysql mysqli zip gd intl \
-    && curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/bin/ --filename=composer \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 

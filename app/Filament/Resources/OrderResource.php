@@ -18,14 +18,37 @@ class OrderResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-shopping-cart';
 
+    public static function canViewAny(): bool
+    {
+        return auth()->user()?->hasAnyRole(['admin', 'partenaire']) ?? false;
+    }
+
+    public static function canCreate(): bool
+    {
+        return auth()->user()?->hasRole('admin') ?? false;
+    }
+
+    public static function canEdit($record): bool
+    {
+        return auth()->user()?->hasAnyRole(['admin', 'partenaire']) ?? false;
+    }
+
+    public static function canDelete($record): bool
+    {
+        return auth()->user()?->hasRole('admin') ?? false;
+    }
+
     public static function form(Form $form): Form
     {
+        $isPartner = auth()->user()?->hasRole('partenaire');
+
         return $form
             ->schema([
                 Forms\Components\Select::make('user_id')
                     ->relationship('user', 'name')
                     ->preload()
-                    ->searchable(),
+                    ->searchable()
+                    ->disabled($isPartner),
                 Forms\Components\Select::make('status')
                     ->options([
                         'pending' => 'En attente',
@@ -37,11 +60,14 @@ class OrderResource extends Resource
                     ]),
                 Forms\Components\TextInput::make('total')
                     ->numeric()
-                    ->prefix('€'),
+                    ->prefix('€')
+                    ->disabled($isPartner),
                 Forms\Components\KeyValue::make('items')
                     ->keyLabel('Produit')
-                    ->valueLabel('Quantité'),
-                Forms\Components\Textarea::make('shipping_address'),
+                    ->valueLabel('Quantité')
+                    ->disabled($isPartner),
+                Forms\Components\Textarea::make('shipping_address')
+                    ->disabled($isPartner),
             ]);
     }
 

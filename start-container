@@ -1,14 +1,33 @@
 #!/bin/sh
 
-if [ ! -d "vendor/laravel" ]; then
-    composer install --no-interaction --prefer-dist
+cd /var/www/html
+
+if [ ! -f "vendor/autoload.php" ]; then
+    echo "ERROR: vendor/autoload.php not found."
+    echo "Lance './start.sh' depuis le dossier du projet."
+    exit 1
+fi
+
+mkdir -p bootstrap/cache storage/framework/cache storage/framework/sessions storage/framework/views storage/logs
+chmod -R 777 bootstrap/cache storage
+
+rm -f bootstrap/cache/config.php bootstrap/cache/services.php bootstrap/cache/routes-v7.php
+
+if [ ! -f "bootstrap/cache/packages.php" ]; then
+    php artisan package:discover --ansi
 fi
 
 if [ ! -f ".env" ]; then
     cp .env.example .env
+fi
+
+if [ -z "$(grep '^APP_KEY=.\+' .env)" ]; then
     php artisan key:generate
 fi
 
+php artisan config:clear
+php artisan filament:assets
 php artisan migrate --force
+php artisan db:seed --force
 
 exec php artisan serve --host=0.0.0.0 --port=80

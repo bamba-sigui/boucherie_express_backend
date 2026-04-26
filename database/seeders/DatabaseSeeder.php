@@ -5,17 +5,24 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Spatie\Permission\Models\Role;
 
 class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
-        $admin = \App\Models\User::create([
-            'name' => 'Admin',
-            'email' => 'admin@boucherie-express.fr',
-            'password' => Hash::make('admin123'),
-            'phone' => '+33 6 00 00 00 00',
-        ]);
+        $adminRole     = Role::firstOrCreate(['name' => 'admin',      'guard_name' => 'web']);
+        $partnerRole   = Role::firstOrCreate(['name' => 'partenaire', 'guard_name' => 'web']);
+
+        $admin = \App\Models\User::firstOrCreate(
+            ['email' => 'admin@boucherie-express.fr'],
+            [
+                'name'     => 'Admin',
+                'password' => Hash::make('admin123'),
+                'phone'    => '+33 6 00 00 00 00',
+            ]
+        );
+        $admin->syncRoles([$adminRole]);
 
         $categories = [
             ['name' => 'Boeuf', 'description' => 'Coupes de Boeuf premium'],

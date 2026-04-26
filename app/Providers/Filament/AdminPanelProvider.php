@@ -4,7 +4,6 @@ namespace App\Providers\Filament;
 
 use Filament\Panel;
 use Filament\PanelProvider;
-use Illuminate\Support\Facades\Auth;
 
 class AdminPanelProvider extends PanelProvider
 {
@@ -12,13 +11,14 @@ class AdminPanelProvider extends PanelProvider
     {
         return $panel
             ->id('admin')
-            ->title('Boucherie Express - Administration')
-            ->navigationIcon('heroicon-o-shopping-bag')
-            ->slug('admin')
-            ->path('admin')
-            ->login()
+            ->brandName('Boucherie Express')
+            ->path('dashboard')
+            ->login(\App\Filament\Pages\Auth\Login::class)
             ->colors([
                 'primary' => '#dc2626',
+            ])
+            ->authMiddleware([
+                \App\Http\Middleware\FilamentAuthenticate::class,
             ])
             ->resources([
                 \App\Filament\Resources\ProductResource::class,
@@ -28,8 +28,6 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->pages([
                 \Filament\Pages\Dashboard::class,
-            ])
-            ->discoverResources(in app_path('Filament/Resources'), 'App\\Filament\\Resources')
-            ->discoverPages(in app_path('Filament/Pages'), 'App\\Filament\\Pages');
+            ]);
     }
 }

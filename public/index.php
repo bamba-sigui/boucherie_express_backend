@@ -1,13 +1,21 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <title>Boucherie Express</title>
-</head>
-<body>
-    <h1>Laravel Boucherie Express</h1>
-    <p>Install dependencies: <code>composer install</code></p>
-    <p>Run: <code>php artisan serve</code></p>
-</body>
-</html>
+<?php
+
+use Illuminate\Http\Request;
+
+define('LARAVEL_START', microtime(true));
+
+if (file_exists($maintenance = __DIR__.'/../storage/framework/maintenance.php')) {
+    require $maintenance;
+}
+
+require __DIR__.'/../vendor/autoload.php';
+
+$app = require_once __DIR__.'/../bootstrap/app.php';
+
+$kernel = $app->make(Illuminate\Contracts\Http\Kernel::class);
+
+$response = $kernel->handle(
+    $request = Request::capture()
+)->send();
+
+$kernel->terminate($request, $response);

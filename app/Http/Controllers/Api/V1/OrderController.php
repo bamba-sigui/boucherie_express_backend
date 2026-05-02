@@ -3,42 +3,52 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\OrderResource;
 use App\Models\Order;
 use App\Models\OrderTracking;
-use Illuminate\Http\JsonResponse;
+use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class OrderController extends Controller
 {
-    public function index(Request $request): JsonResponse
-    {
-        $query = Order::with(['user', 'tracking']);
+    use ApiResponse;
 
-        if (Auth::check() && !$request->user()->is_admin) {
-            $query->where('user_id', Auth::id());
+    public function index(Request $request)
+    {
+        $query = Order::with(['user', 'tracking', 'items']);
+
+        if (!$request->user()->hasRole('admin')) {
+            $query->where('user_id', $request->user()->id);
         }
 
         if ($request->has('status')) {
             $query->where('status', $request->status);
         }
 
-        $orders = $query->latest()->paginate($request->per_page ?? 50);
-        return response()->json($orders);
+        $orders = $query->latest('created_at')->paginate($request->per_page ?? 20);
+
+        return $this->ok(OrderResource::collection($orders)->response()->getData(true));
     }
 
-    public function show(int $id): JsonResponse
+    public function show(Request $request, int $id)
     {
-        $order = Order::with(['user', 'tracking'])->findOrFail($id);
-        return response()->json($order);
+        $query = Order::with(['user', 'tracking', 'items']);
+
+        if (!$request->user()->hasRole('admin')) {
+            $query->where('user_id', $request->user()->id);
+        }
+
+        $order = $query->findOrFail($id);
+        return $this->ok(new OrderResource($order));
     }
 
-    public function store(Request $request): JsonResponse
+    public function store(Request $request)
     {
         $validated = $request->validate([
-            'items' => 'required|array|min:1',
+            'items'            => 'required|array|min:1',
             'items.*.product_id' => 'required|exists:products,id',
-            'items.*.quantity' => 'required|integer|min:1',
+            'items.*.quantity'   => 'required|integer|min:1',
             'shipping_address' => 'required|string',
         ]);
 
@@ -49,27 +59,27 @@ class OrderController extends Controller
         }
 
         $order = Order::create([
-            'user_id' => Auth::id(),
-            'status' => OrderTracking::STATUS_PENDING,
-            'total' => $total,
-            'items' => $validated['items'],
+            'user_id'          => $request->user()->id,
+            'status'           => 'pending',
+            'total'            => $total,
+            'items'            => $validated['items'],
             'shipping_address' => $validated['shipping_address'],
         ]);
 
         OrderTracking::create([
             'order_id' => $order->id,
-            'status' => OrderTracking::STATUS_PENDING,
-            'note' => 'Commande créée',
+            'status'   => 'pending',
+            'note'     => 'Commande créée',
         ]);
 
-        return response()->json($order->load('tracking'), 201);
+        return $this->ok(new OrderResource($order->load('tracking')), 201);
     }
 
-    public function updateStatus(Request $request, int $id): JsonResponse
+    public function updateStatus(Request $request, int $id)
     {
         $validated = $request->validate([
             'status' => 'required|in:pending,paid,preparing,shipping,delivered,cancelled',
-            'note' => 'nullable|string',
+            'note'   => 'nullable|string',
         ]);
 
         $order = Order::findOrFail($id);
@@ -77,10 +87,45 @@ class OrderController extends Controller
 
         OrderTracking::create([
             'order_id' => $order->id,
-            'status' => $validated['status'],
-            'note' => $validated['note'] ?? null,
+            'status'   => $validated['status'],
+            'note'     => $validated['note'] ?? null,
         ]);
 
-        return response()->json($order->load('tracking'));
+        return $this->ok(new OrderResource($order->load('tracking')));
+    }
+
+    public function update(Request $request, int $id)
+    {
+        $order = Order::findOrFail($id);
+        $validated = $request->validate([
+            'status'           => 'sometimes|in:pending,paid,preparing,shipping,delivered,cancelled',
+            'shipping_address' => 'sometimes|string',
+        ]);
+        $order->update($validated);
+        return $this->ok(new OrderResource($order->load('tracking')));
+    }
+
+    public function destroy(int $id)
+    {
+        $order = Order::findOrFail($id);
+        $order->delete();
+        return $this->ok(['message' => 'Commande supprimée']);
+    }
+
+    public function courierLocation(Request $request, int $id)
+    {
+        $order = Order::where('user_id', $request->user()->id)->findOrFail($id);
+
+        if (!$order->courier_id || $order->status !== 'delivering') {
+            return $this->fail('Pas de livreur en cours', 404);
+        }
+
+        $courier = $order->courier;
+        return $this->ok([
+            'lat'        => (float) $courier->current_lat,
+            'lng'        => (float) $courier->current_lng,
+            'heading'    => (float) $courier->current_heading,
+            'lastUpdate' => $courier->location_updated_at?->toIso8601String(),
+        ]);
     }
 }

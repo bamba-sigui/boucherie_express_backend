@@ -21,7 +21,7 @@ class LoginController extends Controller
         ]);
 
         if (Auth::attempt($credentials, $request->boolean('remember'))) {
-            $request->session()->regenerate();
+            $request->session()->regenerateToken();
 
             if (!Auth::user()->hasAnyRole(['admin', 'partenaire'])) {
                 Auth::logout();

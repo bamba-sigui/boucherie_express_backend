@@ -3,13 +3,16 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\ProductResource;
 use App\Models\Product;
-use Illuminate\Http\JsonResponse;
+use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
 
 class ProductController extends Controller
 {
-    public function index(Request $request): JsonResponse
+    use ApiResponse;
+
+    public function index(Request $request)
     {
         $query = Product::with('category')->where('is_active', true);
 
@@ -27,41 +30,50 @@ class ProductController extends Controller
 
         $products = $query->paginate($request->per_page ?? 20);
 
-        return response()->json($products);
+        return $this->ok(ProductResource::collection($products)->response()->getData(true));
     }
 
-    public function show(int $id): JsonResponse
+    public function show(int $id)
     {
         $product = Product::with('category')->findOrFail($id);
-        return response()->json($product);
+        return $this->ok(new ProductResource($product));
     }
 
-    public function store(Request $request): JsonResponse
+    public function store(Request $request)
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
+            'name'        => 'required|string|max:255',
             'description' => 'nullable|string',
-            'price' => 'required|numeric|min:0',
-            'stock' => 'integer|min:0',
+            'price'       => 'required|numeric|min:0',
+            'stock'       => 'integer|min:0',
             'category_id' => 'nullable|exists:categories,id',
-            'image' => 'nullable|string',
+            'image'       => 'nullable|string',
         ]);
 
         $product = Product::create($validated);
-        return response()->json($product, 201);
+        return $this->ok(new ProductResource($product), 201);
     }
 
-    public function update(Request $request, int $id): JsonResponse
+    public function update(Request $request, int $id)
     {
         $product = Product::findOrFail($id);
-        $product->update($request->validated());
-        return response()->json($product);
+        $validated = $request->validate([
+            'name'        => 'sometimes|string|max:255',
+            'description' => 'nullable|string',
+            'price'       => 'sometimes|numeric|min:0',
+            'stock'       => 'sometimes|integer|min:0',
+            'category_id' => 'nullable|exists:categories,id',
+            'image'       => 'nullable|string',
+            'is_active'   => 'sometimes|boolean',
+        ]);
+        $product->update($validated);
+        return $this->ok(new ProductResource($product));
     }
 
-    public function destroy(int $id): JsonResponse
+    public function destroy(int $id)
     {
         $product = Product::findOrFail($id);
         $product->delete();
-        return response()->json(['message' => 'Product deleted']);
+        return $this->ok(['message' => 'Produit supprimé']);
     }
 }

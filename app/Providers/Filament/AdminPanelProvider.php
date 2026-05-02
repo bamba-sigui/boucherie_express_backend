@@ -25,9 +25,20 @@ class AdminPanelProvider extends PanelProvider
                 \App\Filament\Resources\CategoryResource::class,
                 \App\Filament\Resources\OrderResource::class,
                 \App\Filament\Resources\UserResource::class,
+                \App\Filament\Resources\CustomerResource::class,
+                \App\Filament\Resources\CourierResource::class,
+                \App\Filament\Resources\CouponResource::class,
             ])
             ->pages([
                 \Filament\Pages\Dashboard::class,
+                \App\Filament\Pages\Settings::class,
+                \App\Filament\Pages\CourierMap::class,
+            ])
+            ->widgets([
+                \App\Filament\Widgets\RevenueOverview::class,
+                \App\Filament\Widgets\OrdersChart::class,
+                \App\Filament\Widgets\TopProducts::class,
+                \App\Filament\Widgets\LowStockAlert::class,
             ]);
     }
 }

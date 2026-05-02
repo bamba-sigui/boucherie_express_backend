@@ -14,6 +14,9 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->api(prepend: [
             \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
         ]);
+        $middleware->alias([
+            'firebase.auth' => \App\Http\Middleware\FirebaseAuthMiddleware::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
     })

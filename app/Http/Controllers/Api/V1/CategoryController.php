@@ -4,40 +4,46 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
 use App\Models\Category;
-use Illuminate\Http\JsonResponse;
+use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
 
 class CategoryController extends Controller
 {
-    public function index(): JsonResponse
+    use ApiResponse;
+
+    public function index()
     {
-        $categories = Category::all();
-        return response()->json($categories);
+        $categories = Category::orderBy('sort_order')->orderBy('name')->get();
+        return $this->ok($categories);
     }
 
-    public function store(Request $request): JsonResponse
+    public function store(Request $request)
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
+            'name'        => 'required|string|max:255',
             'description' => 'nullable|string',
-            'image' => 'nullable|string',
+            'image'       => 'nullable|string',
         ]);
-
         $category = Category::create($validated);
-        return response()->json($category, 201);
+        return $this->ok($category, 201);
     }
 
-    public function update(Request $request, int $id): JsonResponse
+    public function update(Request $request, int $id)
     {
         $category = Category::findOrFail($id);
-        $category->update($request->validated());
-        return response()->json($category);
+        $validated = $request->validate([
+            'name'        => 'sometimes|string|max:255',
+            'description' => 'nullable|string',
+            'image'       => 'nullable|string',
+        ]);
+        $category->update($validated);
+        return $this->ok($category);
     }
 
-    public function destroy(int $id): JsonResponse
+    public function destroy(int $id)
     {
         $category = Category::findOrFail($id);
         $category->delete();
-        return response()->json(['message' => 'Category deleted']);
+        return $this->ok(['message' => 'Catégorie supprimée']);
     }
 }

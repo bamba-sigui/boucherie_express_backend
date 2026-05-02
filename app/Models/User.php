@@ -20,11 +20,8 @@ class User extends Authenticatable implements FilamentUser
     }
 
     protected $fillable = [
-        'name',
-        'email',
-        'password',
-        'phone',
-        'firebase_uid',
+        'name', 'email', 'password', 'phone', 'firebase_uid',
+        'photo_url', 'fcm_token', 'account_type', 'is_premium', 'premium_until',
     ];
 
     protected $hidden = [
@@ -35,8 +32,25 @@ class User extends Authenticatable implements FilamentUser
     protected function casts(): array
     {
         return [
-            'password' => 'hashed',
+            'password'      => 'hashed',
             'email_verified_at' => 'datetime',
+            'is_premium'    => 'boolean',
+            'premium_until' => 'datetime',
         ];
+    }
+
+    public function orders()
+    {
+        return $this->hasMany(Order::class);
+    }
+
+    public function addresses()
+    {
+        return $this->hasMany(Address::class);
+    }
+
+    public function favorites()
+    {
+        return $this->hasMany(Favorite::class);
     }
 }

@@ -3,67 +3,73 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\UserResource;
 use App\Models\User;
-use Illuminate\Http\JsonResponse;
+use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 
 class AuthController extends Controller
 {
-    public function register(Request $request): JsonResponse
+    use ApiResponse;
+
+    public function register(Request $request)
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email',
+            'name'     => 'required|string|max:255',
+            'email'    => 'required|email|unique:users,email',
             'password' => 'required|string|min:8',
-            'phone' => 'nullable|string',
+            'phone'    => 'nullable|string',
         ]);
 
         $user = User::create([
-            'name' => $validated['name'],
-            'email' => $validated['email'],
+            'name'     => $validated['name'],
+            'email'    => $validated['email'],
             'password' => Hash::make($validated['password']),
-            'phone' => $validated['phone'] ?? null,
+            'phone'    => $validated['phone'] ?? null,
         ]);
 
         $token = $user->createToken('auth-token')->plainTextToken;
 
-        return response()->json([
-            'user' => $user,
-            'token' => $token,
-        ], 201);
+        return $this->ok(['user' => new UserResource($user), 'token' => $token], 201);
     }
 
-    public function login(Request $request): JsonResponse
+    public function login(Request $request)
     {
         $validated = $request->validate([
-            'email' => 'required|email',
+            'email'    => 'required|email',
             'password' => 'required|string',
         ]);
 
         $user = User::where('email', $validated['email'])->first();
 
         if (!$user || !Hash::check($validated['password'], $user->password)) {
-            return response()->json(['message' => 'Invalid credentials'], 401);
+            return $this->fail('Identifiants invalides', 401);
         }
 
         $token = $user->createToken('auth-token')->plainTextToken;
 
-        return response()->json([
-            'user' => $user,
-            'token' => $token,
-        ]);
+        return $this->ok(['user' => new UserResource($user), 'token' => $token]);
     }
 
-    public function me(): JsonResponse
+    public function me(Request $request)
     {
-        return response()->json(Auth::user());
+        return $this->ok(new UserResource($request->user()->load('addresses')));
     }
 
-    public function logout(): JsonResponse
+    public function logout(Request $request)
     {
-        Auth::user()->currentAccessToken()->delete();
-        return response()->json(['message' => 'Logged out']);
+        $request->user()->currentAccessToken()->delete();
+        return $this->ok(['message' => 'Déconnecté']);
+    }
+
+    public function checkPhone(Request $request)
+    {
+        $request->validate(['phone' => 'required|string']);
+        $exists = User::where('phone', $request->query('phone'))
+            ->where('account_type', '!=', 'admin')
+            ->exists();
+        return $this->ok(['exists' => $exists]);
     }
 }

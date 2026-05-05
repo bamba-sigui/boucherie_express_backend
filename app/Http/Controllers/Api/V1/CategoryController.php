@@ -11,10 +11,22 @@ class CategoryController extends Controller
 {
     use ApiResponse;
 
+    private function format(Category $category): array
+    {
+        return [
+            'id'          => $category->id,
+            'name'        => $category->name,
+            'description' => $category->description,
+            'icon'        => $category->icon,
+            'image'       => $category->image,
+            'sortOrder'   => (int) ($category->sort_order ?? 0),
+        ];
+    }
+
     public function index()
     {
         $categories = Category::orderBy('sort_order')->orderBy('name')->get();
-        return $this->ok($categories);
+        return $this->ok($categories->map(fn ($c) => $this->format($c))->values());
     }
 
     public function store(Request $request)
@@ -23,9 +35,11 @@ class CategoryController extends Controller
             'name'        => 'required|string|max:255',
             'description' => 'nullable|string',
             'image'       => 'nullable|string',
+            'icon'        => 'nullable|string',
+            'sort_order'  => 'nullable|integer',
         ]);
         $category = Category::create($validated);
-        return $this->ok($category, 201);
+        return $this->ok($this->format($category), 201);
     }
 
     public function update(Request $request, int $id)
@@ -35,9 +49,11 @@ class CategoryController extends Controller
             'name'        => 'sometimes|string|max:255',
             'description' => 'nullable|string',
             'image'       => 'nullable|string',
+            'icon'        => 'nullable|string',
+            'sort_order'  => 'nullable|integer',
         ]);
         $category->update($validated);
-        return $this->ok($category);
+        return $this->ok($this->format($category));
     }
 
     public function destroy(int $id)

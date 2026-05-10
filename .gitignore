@@ -13,3 +13,10 @@
 /.phpunit.result.cache
 /.DS_Store
 Thumbs.db
+
+# Firebase service account credentials (secrets)
+/storage/app/firebase/
+
+# Laravel bootstrap cache (generated, not for VCS)
+/bootstrap/cache/packages.php
+/bootstrap/cache/services.php

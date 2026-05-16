@@ -16,7 +16,11 @@ class ProductResource extends JsonResource
             'oldPrice'            => $this->old_price ? (int) $this->old_price : null,
             'stock'               => $this->stock,
             'unit'                => $this->unit ?? 'kg',
-            'images'              => $this->images ?? ($this->image ? [$this->image] : []),
+            'videoUrl'            => $this->video_url,
+            'images'              => collect($this->images ?? ($this->image ? [$this->image] : []))
+                                ->map(fn ($img) => str_starts_with($img, 'http') ? $img : \Illuminate\Support\Facades\Storage::disk('public')->url($img))
+                                ->values()
+                                ->toArray(),
             'categoryId'          => $this->category_id,
             'category'            => $this->whenLoaded('category', fn () => [
                 'id'   => $this->category->id,

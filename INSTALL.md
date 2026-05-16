@@ -55,7 +55,7 @@ App\Models\User::create(['name' => 'Admin', 'email' => 'admin@boucherie-express.
 | URL | Description |
 |-----|-------------|
 | `http://localhost:8000` | Application Laravel |
-| `http://localhost:8000/admin` | Panneau d'administration Filament |
+| `http://localhost:8000/dashboard` | Panneau d'administration Filament |
 | `http://localhost:3306` | MySQL |
 | `http://localhost:6379` | Redis |
 | `http://localhost:1025` | Mailpit ( SMTP) |

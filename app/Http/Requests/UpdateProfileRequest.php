@@ -11,12 +11,25 @@ class UpdateProfileRequest extends FormRequest
         return true;
     }
 
+    protected function prepareForValidation(): void
+    {
+        $nullify = [];
+        foreach (['name', 'phone', 'email'] as $field) {
+            if ($this->input($field) === '') {
+                $nullify[$field] = null;
+            }
+        }
+        if ($nullify) {
+            $this->merge($nullify);
+        }
+    }
+
     public function rules(): array
     {
         return [
-            'name'  => 'sometimes|string|max:255',
-            'phone' => 'sometimes|string|max:30',
-            'email' => 'sometimes|email|unique:users,email,' . $this->user()->id,
+            'name'  => 'sometimes|nullable|string|max:255',
+            'phone' => 'sometimes|nullable|string|max:30',
+            'email' => 'sometimes|nullable|email|unique:users,email,' . $this->user()->id,
         ];
     }
 }

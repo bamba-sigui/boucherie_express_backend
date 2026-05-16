@@ -21,7 +21,10 @@ class ProfileController extends Controller
     public function update(UpdateProfileRequest $request)
     {
         $user = $request->user();
-        $user->update($request->validated());
+        $data = array_filter($request->validated(), fn($v) => !is_null($v));
+        if (!empty($data)) {
+            $user->update($data);
+        }
         return $this->ok(new UserResource($user->fresh()->load('addresses')));
     }
 

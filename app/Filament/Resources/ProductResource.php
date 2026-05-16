@@ -58,8 +58,42 @@ class ProductResource extends Resource
                 Forms\Components\Select::make('category_id')
                     ->relationship('category', 'name')
                     ->preload(),
+                Forms\Components\Radio::make('image_source')
+                    ->label('Source de l\'image')
+                    ->options(['upload' => 'Uploader une photo', 'url' => 'URL externe'])
+                    ->default('upload')
+                    ->live()
+                    ->dehydrated(false)
+                    ->afterStateHydrated(function (Forms\Components\Radio $component, $record) {
+                        if ($record && $record->image && empty($record->images)) {
+                            $component->state('url');
+                        } else {
+                            $component->state('upload');
+                        }
+                    })
+                    ->columnSpanFull(),
+                Forms\Components\FileUpload::make('images')
+                    ->label('Photos du produit')
+                    ->multiple()
+                    ->image()
+                    ->disk('public')
+                    ->directory('products')
+                    ->maxSize(2048)
+                    ->reorderable()
+                    ->panelLayout('grid')
+                    ->columnSpanFull()
+                    ->hidden(fn (Forms\Get $get) => $get('image_source') !== 'upload'),
                 Forms\Components\TextInput::make('image')
-                    ->url(),
+                    ->label('URL de l\'image')
+                    ->url()
+                    ->placeholder('https://...')
+                    ->columnSpanFull()
+                    ->hidden(fn (Forms\Get $get) => $get('image_source') !== 'url'),
+                Forms\Components\TextInput::make('video_url')
+                    ->label('URL de la vidéo')
+                    ->url()
+                    ->placeholder('https://...')
+                    ->columnSpanFull(),
                 Forms\Components\Toggle::make('is_active')
                     ->default(true),
             ]);
@@ -73,6 +107,24 @@ class ProductResource extends Resource
                 Tables\Columns\TextColumn::make('category.name'),
                 Tables\Columns\TextColumn::make('price')->money('EUR'),
                 Tables\Columns\TextColumn::make('stock'),
+                Tables\Columns\ImageColumn::make('images_preview')
+                    ->label('Photos')
+                    ->getStateUsing(function ($record) {
+                        $images = $record->images;
+                        if (!empty($images)) {
+                            return array_slice($images, 0, 2);
+                        }
+                        return $record->image ? [$record->image] : [];
+                    })
+                    ->stacked()
+                    ->limit(2)
+                    ->defaultImageUrl('https://placehold.co/60x60?text=No+image'),
+                Tables\Columns\TextColumn::make('video_url')
+                    ->label('Vidéo')
+                    ->formatStateUsing(fn ($state) => $state ? '▶ Voir' : '—')
+                    ->url(fn ($record) => $record->video_url)
+                    ->openUrlInNewTab()
+                    ->color('primary'),
                 Tables\Columns\BooleanColumn::make('is_active'),
                 Tables\Columns\TextColumn::make('created_at')->dateTime(),
             ])

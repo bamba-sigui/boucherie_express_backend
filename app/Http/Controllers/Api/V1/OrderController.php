@@ -26,9 +26,9 @@ class OrderController extends Controller
             $query->where('status', $request->status);
         }
 
-        $orders = $query->latest('created_at')->paginate($request->per_page ?? 20);
+        $orders = $query->latest('created_at')->get();
 
-        return $this->ok(OrderResource::collection($orders)->response()->getData(true));
+        return $this->ok(OrderResource::collection($orders));
     }
 
     public function show(Request $request, int $id)

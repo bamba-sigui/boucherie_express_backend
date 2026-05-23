@@ -26,8 +26,9 @@ Route::prefix('v1')->group(function () {
     Route::get('products/{id}', [ProductController::class, 'show']);
     Route::get('categories', [CategoryController::class, 'index']);
 
-    // Webhook paiement (signature vérifiée à l'intérieur)
+    // Webhooks paiement (signature vérifiée à l'intérieur)
     Route::post('webhooks/cinetpay', [PaymentController::class, 'webhook']);
+    Route::post('webhooks/genius-pay', [PaymentController::class, 'webhook']);
 
     // Routes protégées par Firebase Auth (app Flutter)
     Route::middleware('firebase.auth')->group(function () {

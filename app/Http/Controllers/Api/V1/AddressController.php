@@ -34,7 +34,7 @@ class AddressController extends Controller
             'label'       => 'required|string|max:255',
             'address'     => 'required|string',
             'city'        => 'required|string|max:255',
-            'postal_code' => 'required|string|max:20',
+            'postal_code' => 'nullable|string|max:20',
             'latitude'    => 'nullable|numeric',
             'longitude'   => 'nullable|numeric',
             'is_default'  => 'boolean',
